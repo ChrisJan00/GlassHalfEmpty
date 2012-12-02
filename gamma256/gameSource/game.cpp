@@ -436,11 +436,14 @@ int mainFunction( int inArgCount, char **inArgs ) {
             appNamePointer[0] = '\0';
             
             printf( "Mac: changing working dir to %s\n", appDirectoryPath );
+
             chdir( appDirectoryPath );
+            chdir( "GlassHalfEmpty.app/Contents/Resources" );
             }
         
         delete [] appDirectoryPath;
     #endif
+
 
 
 
@@ -553,12 +556,23 @@ char playGame() {
     Uint32 *titlePixels = new Uint32[ numTitlePixels ];
     
     for( int i=0; i<numTitlePixels; i++ ) {
-        titlePixels[ i ] =
-            (unsigned char )( titleRed[i] * 255 ) << 16
+#ifdef PIXEL_FORMAT_BGRA
+        titlePixels[ i ] = (
+            (unsigned char )( titleBlue[i] * 255 ) << 16
             |
             (unsigned char )( titleGreen[i] * 255 ) << 8
             |
-            (unsigned char )( titleBlue[i] * 255 );
+            (unsigned char )( titleRed[i] * 255 )
+            ) << 8;
+
+#else
+        titlePixels[ i ] =
+                    (unsigned char )( titleRed[i] * 255 ) << 16
+                    |
+                    (unsigned char )( titleGreen[i] * 255 ) << 8
+                    |
+                    (unsigned char )( titleBlue[i] * 255 );
+#endif
         }
     
     // fill screen with title
@@ -777,16 +791,27 @@ char playGame() {
                 
 
                 Uint32 gamePixel = gameImage[i];
-                
+#ifdef PIXEL_FORMAT_BGRA
+                unsigned char gameRed = gamePixel >> 8 & 0xFF;
+                unsigned char gameGreen = gamePixel >> 16 & 0xFF;
+                unsigned char gameBlue = gamePixel >> 24 & 0xFF;
+#else
                 unsigned char gameRed = gamePixel >> 16 & 0xFF;
                 unsigned char gameGreen = gamePixel >> 8 & 0xFF;
                 unsigned char gameBlue = gamePixel & 0xFF;
+#endif
                 
                 Uint32 titlePixel = titlePixels[i];
-                
+#ifdef PIXEL_FORMAT_BGRA
+                unsigned char titleRed = titlePixel >> 8 & 0xFF;
+                unsigned char titleGreen = titlePixel >> 16 & 0xFF;
+                unsigned char titleBlue = titlePixel >> 24 & 0xFF;
+
+#else
                 unsigned char titleRed = titlePixel >> 16 & 0xFF;
                 unsigned char titleGreen = titlePixel >> 8 & 0xFF;
                 unsigned char titleBlue = titlePixel & 0xFF;
+#endif
             
                 unsigned char red = 
                     (unsigned char)( 
@@ -801,7 +826,11 @@ char playGame() {
 
                 int x = i % width;
                 if( x <= wipePosition ) {
+#ifdef PIXEL_FORMAT_BGRA
+                    gameImage[i] = (blue << 16 | green << 8 | red) << 8;
+#else
                     gameImage[i] = red << 16 | green << 8 | blue;
+#endif
                     }
                 
                 }

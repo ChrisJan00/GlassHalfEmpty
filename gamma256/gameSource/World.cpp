@@ -283,9 +283,12 @@ Uint32 sampleFromWorld( int inX, int inY, double inWeight ) {
     unsigned char g = (unsigned char)( inWeight * c.g );
     unsigned char b = (unsigned char)( inWeight * c.b );
     
-
+#ifdef PIXEL_FORMAT_BGRA
+    return (b << 16 | g << 8 | r) << 8;
+#else // PIXEL_FORMAT_ARGB
     return r << 16 | g << 8 | b;
-    }
+#endif
+}
 
 
 

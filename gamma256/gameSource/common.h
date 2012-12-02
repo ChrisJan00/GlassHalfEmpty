@@ -5,6 +5,12 @@
 
 #include "minorGems/graphics/Image.h"
 
+#ifdef __mac__
+#define PIXEL_FORMAT_BGRA
+#else
+#define PIXEL_FORMAT_ARGB
+#endif
+
 
 // reads a TGA file from the default ("graphics") folder
 Image *readTGA( const char *inFileName );

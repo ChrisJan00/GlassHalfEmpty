@@ -6,7 +6,6 @@
 
 void blowupOntoScreen( Uint32 *inImage, int inWidth, int inHeight,
                        int inBlowFactor, SDL_Surface *inScreen ) {
-    
     int newWidth = inBlowFactor * inWidth;
     int newHeight =  inBlowFactor * inHeight;
     
