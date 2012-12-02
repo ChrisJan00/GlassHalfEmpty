@@ -67,6 +67,7 @@ GraphicContainer *chestContainer;
 GraphicContainer *spriteContainer;
 GraphicContainer *spriteSadContainer;
 GraphicContainer *spouseContainer;
+GraphicContainer *mirrorContainer;
 
 GraphicContainer *prizeAnimationContainer;
 GraphicContainer *dustAnimationContainer;
@@ -139,6 +140,7 @@ class Animation {
                   mFrameNumber( 0 ),
                   mAutoStep( inAutoStep ),
                   mRemoveAtEnd( inRemoveAtEnd ),
+                  mOpacity( 1.0 ),
                   mGraphics( inGraphics ) {
             
             mImageW = mGraphics->mW;
@@ -189,6 +191,7 @@ class Animation {
         char mAutoStep;
         char mRemoveAtEnd;
         
+        double mOpacity;
         
         GraphicContainer *mGraphics;
         
@@ -207,12 +210,13 @@ SimpleVector<Animation> animationList;
 
 int spriteAnimationIndex;
 int spouseAnimationIndex;
-
+int mirrorAnimationIndex;
 
 
 char playerDead = false;
 char spouseDead = false;
 char metSpouse = false;
+char spouseEscaping = false;
 
 
 
@@ -256,6 +260,15 @@ void initWorld() {
     // get pointer to animation in vector
     //spouseAnimation = animationList.getElement( animationList.size() - 1 );
     spouseAnimationIndex = animationList.size() - 1;
+
+
+    spouseEscaping = false;
+
+    Animation mirror( 1000, 0, 8, 8, false, false, mirrorContainer );
+    mirror.mFrameNumber = 0;
+
+    animationList.push_back( mirror );
+    mirrorAnimationIndex = animationList.size() - 1;
     }
 
 
@@ -389,6 +402,7 @@ rgbColor sampleFromWorldNoWeight( int inX, int inY, char *outTransient ) {
     rgbColor returnColor;
     
     char isSampleAnim = false;
+    double tileOpacity = 1.0;
     
     // consider sampling from an animation
     // draw them in reverse order so that oldest sprites are drawn on top
@@ -398,6 +412,7 @@ rgbColor sampleFromWorldNoWeight( int inX, int inY, char *outTransient ) {
         
         int animW = a.mFrameW;
         int animH = a.mFrameH;
+
         
         
         // pixel position relative to animation center
@@ -431,8 +446,10 @@ rgbColor sampleFromWorldNoWeight( int inX, int inY, char *outTransient ) {
         
             if( !isSpriteTransparent( a.mGraphics, animIndex ) ) {
             
+                tileOpacity = 1-a.mOpacity;
+
                 // in non-transparent part
-            
+
                 if( blendWeight != 0 ) {
                     returnColor.r = 
                         ( 1 - blendWeight ) * a.mGraphics->mRed[ animIndex ] 
@@ -463,7 +480,7 @@ rgbColor sampleFromWorldNoWeight( int inX, int inY, char *outTransient ) {
             }
         }
 
-    if( isSampleAnim ) {
+    if( isSampleAnim && tileOpacity == 1 ) {
         // we have already found an animation here that is on top
         // of whatever map graphics we might sample below
         
@@ -570,98 +587,95 @@ rgbColor sampleFromWorldNoWeight( int inX, int inY, char *outTransient ) {
     
     int imageIndex =  tileImageOffset + imageY * tileImageW + imageX;
     int blendImageIndex =  blendTileImageOffset + imageY * tileImageW + imageX;
-    
-    returnColor.r = 
+
+    returnColor.r =
+        (1-tileOpacity) * returnColor.r + tileOpacity * (
         (1-blendWeight) * tileContainer->mRed[ imageIndex ] +
-        blendWeight * tileContainer->mRed[ blendImageIndex ];
+        blendWeight * tileContainer->mRed[ blendImageIndex ] );
     
-    returnColor.g =  
+    returnColor.g =
+        (1-tileOpacity) * returnColor.g + tileOpacity * (
         (1-blendWeight) * tileContainer->mGreen[ imageIndex ] +
-        blendWeight * tileContainer->mGreen[ blendImageIndex ];
+        blendWeight * tileContainer->mGreen[ blendImageIndex ] );
     
-    returnColor.b =  
+    returnColor.b =
+        (1-tileOpacity) * returnColor.b + tileOpacity * (
         (1-blendWeight) * tileContainer->mBlue[ imageIndex ] +
-        blendWeight * tileContainer->mBlue[ blendImageIndex ];
+        blendWeight * tileContainer->mBlue[ blendImageIndex ] );
     
     
     // only consider drawing chests in empty spots
     if( !blocked && isChest( inX, inY ) ) {
         // draw chest here
 
-        char chestType = isChest( inX, inY );
-        
+//        char chestType = isChest( inX, inY );
 
-        // sample from chest image
-        int imageY = inY % chestH;
-        int imageX = inX % chestW;
-    
+        // draw spouse sprite instead of chest
+        Animation a = *( animationList.getElement( spouseAnimationIndex ) );
 
-        if( imageX < 0 ) {
-            imageX += chestW;
-            }
-        if( imageY < 0 ) {
-            imageY += chestH;
-            }
+        int animW = a.mFrameW;
+        int animH = a.mFrameH;
 
-        int spriteIndex = 0;
-        
-        if( chestType == CHEST_OPEN ) {
-            spriteIndex = 1;
-            }
-        
-        // skip to sub-sprite
-        int spriteOffset = 
-            spriteIndex * 
-            chestW * 
-            ( chestH + 1 );
-        
-        int subSpriteIndex = imageY * chestW + imageX;
-        
-        int imageIndex = spriteOffset + subSpriteIndex;
-        
-        if( !isSpriteTransparent( chestContainer, imageIndex ) ) {
-            
-            if( chestType == CHEST_CLOSED ) {
+
+        // pixel position relative to animation center
+        // player position centered on sprint left-to-right
+//        int animX = (int)( inX - a.mX + a.mFrameW / 2 );
+//        int animY = (int)( inY - a.mY + a.mFrameH / 2 );
+        int animX = inX % a.mFrameW;
+        int animY = inY % a.mFrameH;
+
+        if( animX >= 0 && animX < animW
+            &&
+            animY >= 0 && animY < animH ) {
+
+            // pixel is in animation frame
+
+            int animIndex = animY * a.mImageW + animX;
+
+
+            // skip to appropriate anim frame
+            animIndex +=
+                7 *
+                a.mImageW *
+                ( animH + 1 );
+
+            // page to blend with
+            int animBlendIndex = animIndex + animW + 1;
+
+            double blendWeight = a.mPageNumber - (int)a.mPageNumber;
+
+
+            if( !isSpriteTransparent( a.mGraphics, animIndex ) ) {
+
+                // in non-transparent part
+
+                if( blendWeight != 0 ) {
+                    returnColor.r =
+                        ( 1 - blendWeight ) * a.mGraphics->mRed[ animIndex ]
+                        +
+                        blendWeight * a.mGraphics->mRed[ animBlendIndex ];
+                    returnColor.g =
+                        ( 1 - blendWeight ) * a.mGraphics->mGreen[ animIndex ]
+                        +
+                        blendWeight * a.mGraphics->mGreen[ animBlendIndex ];
+                    returnColor.b =
+                        ( 1 - blendWeight ) * a.mGraphics->mBlue[ animIndex ]
+                        +
+                        blendWeight * a.mGraphics->mBlue[ animBlendIndex ];
+                    }
+                else {
+                    // no blend
+                    returnColor.r = a.mGraphics->mRed[ animIndex ];
+                    returnColor.g = a.mGraphics->mGreen[ animIndex ];
+                    returnColor.b = a.mGraphics->mBlue[ animIndex ];
+                    }
+
                 *outTransient = true;
+                // don't return here, because there might be other
+                // animations and sprites that are on top of
+                // this one
+                isSampleAnim = true;
                 }
-            
-            // check if this is one of the gem locations
-            char isGem = false;
-            int gemNumber = 0;
-            
-            for( int i=0; i<numGems && !isGem; i++ ) {
-                if( subSpriteIndex == gemLocations[ i ] ) {
-                    isGem = true;
-                    gemNumber = i;
-                    }
-                }
-            
-            char gemColorUsed = false;
-            
-            if( isGem ) {
-                // check if our gem is turned on for this chest
-                unsigned char code = getChestCode( inX, inY );
-                
-                if( code & 0x01 << gemNumber ) {
-                    
-                    gemColorUsed = true;
-                    
-                    returnColor.r = gemColors[ gemNumber ][ 0 ];
-                    returnColor.g = gemColors[ gemNumber ][ 1 ];
-                    returnColor.b = gemColors[ gemNumber ][ 2 ];
-
-                    }
-                
-                }
-            
-
-            if( !gemColorUsed ) {
-                // use underlying chest color
-                returnColor.r = chestContainer->mRed[ imageIndex ];
-                returnColor.g = chestContainer->mGreen[ imageIndex ];
-                returnColor.b = chestContainer->mBlue[ imageIndex ];
-                }
-            
             }
                 
         }
@@ -819,6 +833,81 @@ void setPlayerPosition( int inX, int inY ) {
 
     }
 
+void spouseFlee() {
+    spouseEscaping = true;
+}
+
+void resetSpouse(int playerX, int playerY) {
+    Animation *spouseAnimation = animationList.getElement(spouseAnimationIndex);
+
+    spouseEscaping = false;
+    spouseAnimation->mX = playerX + 150;
+    spouseAnimation->mY = playerY;
+}
+
+void moveSpouseTo( int spouseX, int spouseY) {
+    Animation *spouseAnimation = animationList.getElement(spouseAnimationIndex);
+
+    spouseAnimation->mX = spouseX;
+    spouseAnimation->mY = spouseY;
+}
+
+void updateSpousePosition(int playerX, int playerY) {
+    if (!spouseEscaping)
+        return;
+
+    int spouseSpeed = 3;
+    int currentSpriteIndex = 3;
+
+    Animation *spouseAnimation = animationList.getElement(spouseAnimationIndex);
+    if (spouseAnimation->mX < playerX) {
+        spouseAnimation->mX -= spouseSpeed;
+        if( ( spouseAnimation->mX / 2 ) % 2 == 0 ) {
+            currentSpriteIndex = 6;
+        }
+        else {
+            currentSpriteIndex = 7;
+        }
+    } else {
+        spouseAnimation->mX += spouseSpeed;
+        if( ( spouseAnimation->mX / 2 ) % 2 == 0 ) {
+            currentSpriteIndex = 2;
+        }
+        else {
+            currentSpriteIndex = 3;
+        }
+    }
+
+    if (spouseAnimation->mX < 0) {
+        spouseAnimation->mX += 4500;
+        spouseEscaping = false;
+    }
+
+    if (spouseAnimation->mX > 4500) {
+        spouseAnimation->mX -= 1;
+        spouseEscaping = false;
+    }
+
+
+    spouseAnimation->mFrameNumber = currentSpriteIndex;
+
+}
+
+
+
+
+void setMirrorPosition( int inX, int inY ) {
+
+    Animation *mirrorAnimation =
+        animationList.getElement( mirrorAnimationIndex );
+
+    mirrorAnimation->mX = inX;
+    // player position centered at sprite's feet
+    int newSpriteY = inY - mirrorAnimation->mFrameH / 2 + 1;
+
+    mirrorAnimation->mY = newSpriteY;
+
+    }
 
 
 void setPlayerSpriteFrame( int inFrame ) {
@@ -834,25 +923,43 @@ void setPlayerSpriteFrame( int inFrame ) {
         // spouse follows player
         spouseAnimation->mFrameNumber = inFrame;
         }
+
+    // update opacity if it's "dying"
+    if (!playerDead) {
+        spriteAnimation->mOpacity = 1.0;
+    } else {
+        spriteAnimation->mFrameNumber = 8;
+        spriteAnimation->mOpacity *= 0.9;
     }
 
+    }
+
+void setMirrorSpriteFrame( int inFrame ) {
+    Animation *mirrorAnimation =
+            animationList.getElement( mirrorAnimationIndex );
+
+    if (!isPlayerDead())
+        mirrorAnimation->mFrameNumber = inFrame;
+    else
+        mirrorAnimation->mFrameNumber = 8;
+}
 
 
 void setCharacterAges( double inAge ) {
     Animation *spriteAnimation = 
         animationList.getElement( spriteAnimationIndex );
-    Animation *spouseAnimation = 
-        animationList.getElement( spouseAnimationIndex );
+//    Animation *spouseAnimation =
+//        animationList.getElement( spouseAnimationIndex );
 
     // 0 -> 0.25, constant page 0
     if( inAge <= 0.25 ) {
         spriteAnimation->mPageNumber = 0;
-        spouseAnimation->mPageNumber = 0;
+        //spouseAnimation->mPageNumber = 0;
         }
     // 0.75 - 1.0, constant last page
     else if( inAge >= 0.75 ) {
         spriteAnimation->mPageNumber = spriteAnimation->mNumPages - 1;
-        spouseAnimation->mPageNumber = spouseAnimation->mNumPages - 1;
+        //spouseAnimation->mPageNumber = spouseAnimation->mNumPages - 1;
         }
     else {
         // blend of pages in between
@@ -861,8 +968,8 @@ void setCharacterAges( double inAge ) {
         spriteAnimation->mPageNumber = 
             blendingAge * ( spriteAnimation->mNumPages - 1 );
 
-        spouseAnimation->mPageNumber = 
-            blendingAge * ( spouseAnimation->mNumPages - 1 );
+//        spouseAnimation->mPageNumber =
+//            blendingAge * ( spouseAnimation->mNumPages - 1 );
         }
     }
 
@@ -896,7 +1003,7 @@ void diePlayer() {
 
     playerDead = true;
     
-    // tombstone
+    // tombstone (not with the mirror, only animation freezes and fade to black)
     spriteAnimation->mFrameNumber = 8;
     }
 
@@ -940,6 +1047,7 @@ void loadWorldGraphics() {
     spriteContainer = new GraphicContainer( "characterSprite.tga" );
     spriteSadContainer = new GraphicContainer( "characterSpriteSad.tga" );
     spouseContainer = new GraphicContainer( "spouseSprite.tga" );
+    mirrorContainer = new GraphicContainer( "mirrorSprite.tga");
     
     prizeAnimationContainer = new GraphicContainer( "chestPrize.tga" );
     dustAnimationContainer = new GraphicContainer( "chestDust.tga" );
@@ -955,6 +1063,7 @@ void destroyWorldGraphics() {
     delete spriteContainer;
     delete spriteSadContainer;
     delete spouseContainer;
+    delete mirrorContainer;
     
     delete prizeAnimationContainer;
     delete dustAnimationContainer;

@@ -64,9 +64,9 @@ HashTable<Type>::~HashTable() {
     delete [] mKeysA;
     delete [] mKeysB;
 
-    printf( "%d hits, %d misses, %f hit ratio\n", 
-            mHitCount, mMissCount, 
-            mHitCount / (double)( mHitCount + mMissCount ) );
+//    printf( "%d hits, %d misses, %f hit ratio\n",
+//            mHitCount, mMissCount,
+//            mHitCount / (double)( mHitCount + mMissCount ) );
     }
 
 

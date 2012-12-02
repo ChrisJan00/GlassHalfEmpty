@@ -165,7 +165,7 @@ char isChest( int inX, int inY ) {
     // chests get denser as y increases
     // no chests where gridY < 5 
     // even less dense than blocks
-    double threshold = 1 - ( gridY - 5 ) / 200.0;
+    double threshold = 1 - ( gridY - 5 ) / 100.0;
 
     // use different seed than for blocks
     double randValue = noise3d( 73642 * gridX, 283277 * gridY, seed * 987423 );
@@ -176,7 +176,7 @@ char isChest( int inX, int inY ) {
         for( int i=0; i<openedChests.size(); i++ ) {
             pair *p = openedChests.getElement( i );
             if( p->x == gridX && p->y == gridY ) {
-                return CHEST_OPEN;
+                return CHEST_NONE;
                 }
             }
         return CHEST_CLOSED;

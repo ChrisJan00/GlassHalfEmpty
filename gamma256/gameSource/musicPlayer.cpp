@@ -477,7 +477,7 @@ void loadMusicImage( const char *inTGAFileName ) {
             }
         }
     
-    printf( "Max note length in song = %d\n", maxNoteLength );
+//    printf( "Max note length in song = %d\n", maxNoteLength );
     
 
     

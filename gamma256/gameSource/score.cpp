@@ -9,7 +9,7 @@
 
 Image *numeralImage;
 int numeralW = 3;
-int numeralH = 4;
+int numeralH = 0;
 
 int imagePixelCount;
 

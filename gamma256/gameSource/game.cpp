@@ -47,7 +47,7 @@ int main( int inArgCount, char **inArgs ) {
 
 // size of game image
 int width = 100;
-int height = 12;
+int height = 16;
 // area above game image for score
 int scoreHeight = getScoreHeight();
 
@@ -96,10 +96,10 @@ double timeDelta = - ( (double)width / ( gameTime * lockedFrameRate ) );
 //double timeDelta = -0.0;
 
 
-
-
-
-
+//int mirrorOrigin = 4500;
+int mirrorMax = 3500;
+int mirrorOrigin = mirrorMax;
+int mirrorMin = 150;
 
 // the joystick to read from, or NULL if there's no available joystick
 SDL_Joystick *joystick;
@@ -332,6 +332,8 @@ void createScreen() {
                 displayH,
                 SDL_GetError() );
         }
+
+    SDL_WM_SetCaption("Glass Half Empty", 0);
     }
 
 
@@ -376,8 +378,8 @@ int mainFunction( int inArgCount, char **inArgs ) {
         screenHeight = readHeight;
         }
     
-    printf( "Screen dimensions for fullscreen mode:  %dx%d\n",
-            screenWidth, screenHeight );
+//    printf( "Screen dimensions for fullscreen mode:  %dx%d\n",
+//            screenWidth, screenHeight );
     
     // set here, since screenWidth may have changed from default
     maxBlowUpFactor = screenWidth / width;
@@ -393,14 +395,14 @@ int mainFunction( int inArgCount, char **inArgs ) {
         fullScreen = readFullscreen;
         }
     
-    printf( "Starting game in " );
-    if( fullScreen ) {
-        printf( "fullscreen" );
-        }
-    else {
-        printf( "windowed" );
-        }
-    printf( " mode.\n" );
+//    printf( "Starting game in " );
+//    if( fullScreen ) {
+//        printf( "fullscreen" );
+//        }
+//    else {
+//        printf( "windowed" );
+//        }
+//    printf( " mode.\n" );
     
 
 
@@ -409,19 +411,19 @@ int mainFunction( int inArgCount, char **inArgs ) {
 
     // try to open joystick
     int numJoysticks = SDL_NumJoysticks();
-    printf( "Found %d joysticks\n", numJoysticks );
+//    printf( "Found %d joysticks\n", numJoysticks );
     
     if( numJoysticks > 0 ) {
         // open first one by default
         joystick = SDL_JoystickOpen( 0 );
     
         if( joystick == NULL ) {
-	    printf( "Couldn't open joystick 0: %s\n", SDL_GetError() );
+//	    printf( "Couldn't open joystick 0: %s\n", SDL_GetError() );
             }
         int numHats = SDL_JoystickNumHats( joystick );
         
         if( numHats <= 0 ) {
-            printf( "No d-pad found on joystick\n" );
+//            printf( "No d-pad found on joystick\n" );
             SDL_JoystickClose( joystick );
             joystick = NULL;
             }
@@ -484,6 +486,9 @@ int mainFunction( int inArgCount, char **inArgs ) {
     
     SDL_Quit();
 
+    printf("\n\nGlass Half Empty\nby Christiaan Janssen\na remix of 'Passage' by Jason Rohrer\nBerlin Mini Game Jam, December 2012\n\n");
+    fflush(0);
+
     return 0;
     }
 
@@ -524,6 +529,7 @@ char playGame() {
     // track whether we ever met the spouse
     // separate from World's haveMetSpouse()
     char knowSpouse = false;
+    bool spouseWaiting = true;
 
 
     
@@ -568,10 +574,14 @@ char playGame() {
     dX = playerX;
     playerY = 2 + height/2;
     dY = 0;
-    
+
+//    dX = -45;
     setPlayerPosition( (int)playerX, (int)playerY );
     setPlayerSpriteFrame( currentSpriteIndex );
-    
+
+    int mirrorX = mirrorOrigin - (int)playerX;
+    setMirrorPosition( mirrorX, (int)playerY );
+    setMirrorSpriteFrame( currentSpriteIndex );
 
     double lastFrameTimeStamp = Time::getCurrentTime();
     
@@ -642,8 +652,8 @@ char playGame() {
     int numTitleFadeFrames = 200;
 
     char stepDX = true;
-    
 
+//    dX = -45;
     /*
     // TEMP
     // generate mural image
@@ -856,7 +866,7 @@ char playGame() {
                 }
             }        
         
-        drawScore( gameImage, width, height, score );
+        //drawScore( gameImage, width, height, score );
         
 
         if( isPlayerDead() ) {
@@ -946,6 +956,7 @@ char playGame() {
         if( isPlayerDead() ) {
             // stop moving
             moveDelta = 0;
+            movingThisFrame = false;
             }
         
         if( knowSpouse && isSpouseDead() ) {
@@ -1119,6 +1130,9 @@ char playGame() {
         setPlayerPosition( (int)playerX, (int)playerY );
         setPlayerSpriteFrame( currentSpriteIndex );
 
+
+        updateSpousePosition((int)playerX, (int)playerY);
+
         // may change after we set player position
         getSpousePosition( &spouseX, &spouseY );
 
@@ -1159,59 +1173,99 @@ char playGame() {
             // player position on screen inches forward
             dX += timeDelta;
             }
+
+        // not let him "age" behind 0.85
+        if (playerX - dX > width * 0.85)
+            dX = playerX - width * 0.85;
         
         double age = ( playerX - dX ) / width;
+        // adjust mirrorOrigin if too far
+        if (mirrorOrigin - playerX > playerX + 150) {
+            int newMirrorOrigin = mirrorMax * (1-2*age) + 2 * playerX * 2 * age;
+            if (newMirrorOrigin > mirrorMax)
+                newMirrorOrigin = mirrorMax;
+            if (newMirrorOrigin < mirrorMin)
+                newMirrorOrigin = mirrorMin;
+
+            // change it only if it does not warp the mirror to the other side
+            if (newMirrorOrigin - (int)playerX > (int) playerX)
+                mirrorOrigin = newMirrorOrigin;
+        }
         
-        setCharacterAges( age );
+        int mirrorX = mirrorOrigin - (int)playerX;
+        setMirrorPosition( mirrorX, (int)playerY );
+        setMirrorSpriteFrame( currentSpriteIndex );
+        setCharacterAges( age * 1.5 );
+
         
-        if( age >= 0.85 ) {
-            dieSpouse();
-            }
-        if( age >= 0.95 ) {
+//        if( age > 0.85 ) {
+//            dieSpouse();
+//            }
+//        if( age >= 0.95 ) {
+//            diePlayer();
+//            }
+
+        if ( (int) playerX >= (int) mirrorX ) {
+            // when you meet your reflection, the game ends
             diePlayer();
-            }
-        
+        }
+
         
         if( isChest( (int)playerX, (int)playerY ) == CHEST_CLOSED ) {
-            
+
             openChest( (int)playerX, (int)playerY );
+
             
             int chestX, chestY;
                 
             getChestCenter( (int)playerX, (int)playerY, &chestX, &chestY );
+            moveSpouseTo( (int)chestX, (int)chestY);
+            getSpousePosition(&spouseX, &spouseY);
+            spouseFlee();
+            spouseWaiting = false;
                 
-            if( getChestCode( (int)playerX, (int)playerY ) &
-                0x01 << specialGem ) {
+//            if( getChestCode( (int)playerX, (int)playerY ) &
+//                0x01 << specialGem ) {
                 
-                // reward player
-                chestScore += 100;
+//                // reward player
+//                chestScore += 100;
                 
                 
-                startPrizeAnimation( chestX, chestY );
-                }
-            else {
-                startDustAnimation( chestX, chestY );
-                }
+//                startPrizeAnimation( chestX, chestY );
+//                }
+//            else {
+//                startDustAnimation( chestX, chestY );
+//                }
             
-            }
+        } else {
         
         
-        int distanceFromSpouse = (int) sqrt( pow( spouseX - playerX, 2 ) +
-                                             pow( spouseY - playerY, 2 ) );
-        
+            int distanceFromSpouse = (int) sqrt( pow( spouseX - playerX, 2 ) +
+                                                 pow( spouseY - playerY, 2 ) );
 
-        if( ! haveMetSpouse() && 
-            ! isSpouseDead() && 
-            distanceFromSpouse < 10 ) {
-            
-            meetSpouse();
-            
-            knowSpouse = true;
-            
-            startHeartAnimation( 
-                (int)( ( spouseX - playerX ) / 2 + playerX ),
-                (int)( ( spouseY - playerY ) / 2 + playerY ) - 2 );
+
+            if (distanceFromSpouse < 10 && spouseWaiting) {
+                spouseWaiting = false;
+                spouseFlee();
+            } else if (distanceFromSpouse > 150) {
+                spouseWaiting = true;
+                resetSpouse((int)playerX, (int)playerY);
+                getSpousePosition(&spouseX, &spouseY);
             }
+        }
+
+//        if( ! haveMetSpouse() &&
+//            ! isSpouseDead() &&
+//            distanceFromSpouse < 10 ) {
+
+//            meetSpouse();
+            
+//            knowSpouse = true;
+            
+//            startHeartAnimation(
+//                (int)( ( spouseX - playerX ) / 2 + playerX ),
+//                (int)( ( spouseY - playerY ) / 2 + playerY ) - 2 );
+//            }
         
 
         // stop after player has gone off right end of screen
@@ -1263,20 +1317,21 @@ char playGame() {
             
         
         }
-    
-    unsigned long netTime = time( NULL ) - startTime;
-    double frameRate = frameCount / (double)netTime;
-    
-    printf( "Max world x = %f\n", maxWorldX );
-    printf( "Min world x = %f\n", minWorldX );
-    
-    printf( "Frame rate = %f fps (%d frames)\n", 
-            frameRate, frameCount );
 
-    printf( "Game time = %d:%d\n", 
-            (int)netTime / 60, (int)netTime % 60 );
 
-    fflush( stdout );
+//    unsigned long netTime = time( NULL ) - startTime;
+//    double frameRate = frameCount / (double)netTime;
+    
+//    printf( "Max world x = %f\n", maxWorldX );
+//    printf( "Min world x = %f\n", minWorldX );
+    
+//    printf( "Frame rate = %f fps (%d frames)\n",
+//            frameRate, frameCount );
+
+//    printf( "Game time = %d:%d\n",
+//            (int)netTime / 60, (int)netTime % 60 );
+
+//    fflush( stdout );
     
     
     delete titleImage;

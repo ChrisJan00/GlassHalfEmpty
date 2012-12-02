@@ -20,8 +20,14 @@ void startPrizeAnimation( int inX, int inY );
 void startDustAnimation( int inX, int inY );
 
 void setPlayerPosition( int inX, int inY );
+void setMirrorPosition( int inX, int inY );
 void setPlayerSpriteFrame( int inFrame );
+void setMirrorSpriteFrame( int inFrame );
 
+void spouseFlee();
+void resetSpouse(int playerX, int playerY);
+void moveSpouseTo( int spouseX, int spouseY);
+void updateSpousePosition(int playerX, int playerY);
 
 void getSpousePosition( int *outX, int *outY );
 
