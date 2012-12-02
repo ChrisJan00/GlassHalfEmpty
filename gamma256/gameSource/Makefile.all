@@ -56,13 +56,13 @@ music/music.tga \
 GAME_OBJECTS = ${GAME_SOURCES:.cpp=.o}
 
 
-all: Passage ${GAME_GRAPHICS}
+all: GlassHalfEmpty ${GAME_GRAPHICS}
 
 clean:  
-	rm *.o *.tga Passage testMusicPlayer
+	rm *.o *.tga GlassHalfEmpty testMusicPlayer
 
-Passage: ${GAME_OBJECTS} ${MINOR_GEMS_OBJECTS}
-	${LINK} -o Passage ${GAME_OBJECTS} ${MINOR_GEMS_OBJECTS} ${PLATFORM_LINK_FLAGS}
+GlassHalfEmpty: ${GAME_OBJECTS} ${MINOR_GEMS_OBJECTS}
+	${LINK} -o GlassHalfEmpty ${GAME_OBJECTS} ${MINOR_GEMS_OBJECTS} ${PLATFORM_LINK_FLAGS}
 
 testMusicPlayer: ${GAME_OBJECTS} testMusicPlayer.o common.o Timbre.o Envelope.o ${MINOR_GEMS_OBJECTS}
 	${LINK} -o testMusicPlayer musicPlayer.o testMusicPlayer.o common.o Timbre.o Envelope.o ${MINOR_GEMS_OBJECTS} ${PLATFORM_LINK_FLAGS}

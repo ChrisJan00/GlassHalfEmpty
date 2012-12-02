@@ -18,35 +18,35 @@ rm -rf mac
 
 mkdir mac
 
-mkdir mac/Passage
-mkdir mac/Passage/graphics
-mkdir mac/Passage/music
-mkdir mac/Passage/settings
+mkdir mac/GlassHalfEmpty
+mkdir mac/GlassHalfEmpty/graphics
+mkdir mac/GlassHalfEmpty/music
+mkdir mac/GlassHalfEmpty/settings
 
-cp ../documentation/Readme.txt mac/Passage/
+cp ../documentation/Readme.txt mac/GlassHalfEmpty/
 
-cp ../gameSource/graphics/*.tga mac/Passage/graphics
-cp ../gameSource/music/*.tga mac/Passage/music
-cp ../gameSource/settings/*.ini mac/Passage/settings
-
-
+cp ../gameSource/graphics/*.tga mac/GlassHalfEmpty/graphics
+cp ../gameSource/music/*.tga mac/GlassHalfEmpty/music
+cp ../gameSource/settings/*.ini mac/GlassHalfEmpty/settings
 
 
-cp -r macOSX/Passage.app mac/Passage/Passage.app
-cp ../gameSource/Passage mac/Passage/Passage.app/Contents/MacOS
 
-rm -r mac/Passage/Passage.app/CVS
-rm -r mac/Passage/Passage.app/Contents/CVS
-rm -r mac/Passage/Passage.app/Contents/MacOS/CVS
-rm -r mac/Passage/Passage.app/Contents/Resources/CVS
-rm -r mac/Passage/Passage.app/Contents/Frameworks/CVS
+
+cp -r macOSX/GlassHalfEmpty.app mac/GlassHalfEmpty/GlassHalfEmpty.app
+cp ../gameSource/GlassHalfEmpty mac/GlassHalfEmpty/GlassHalfEmpty.app/Contents/MacOS
+
+rm -r mac/GlassHalfEmpty/GlassHalfEmpty.app/CVS
+rm -r mac/GlassHalfEmpty/GlassHalfEmpty.app/Contents/CVS
+rm -r mac/GlassHalfEmpty/GlassHalfEmpty.app/Contents/MacOS/CVS
+rm -r mac/GlassHalfEmpty/GlassHalfEmpty.app/Contents/Resources/CVS
+rm -r mac/GlassHalfEmpty/GlassHalfEmpty.app/Contents/Frameworks/CVS
 
 # install SDL framework
-cp -r $3 mac/Passage/Passage.app/Contents/Frameworks/
+cp -r $3 mac/GlassHalfEmpty/GlassHalfEmpty.app/Contents/Frameworks/
 
 cd mac
-tar cf "Passage_$1_$2.tar" Passage
-gzip "Passage_$1_$2.tar"
+tar cf "GlassHalfEmpty_$1_$2.tar" GlassHalfEmpty
+gzip "GlassHalfEmpty_$1_$2.tar"
 
 
 

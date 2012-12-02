@@ -429,7 +429,7 @@ int mainFunction( int inArgCount, char **inArgs ) {
         printf( "Mac:  app path %s\n", appDirectoryPath );
 
         char *appNamePointer = strstr( appDirectoryPath,
-                                       "Passage.app" );
+                                       "GlassHalfEmpty.app" );
 
         if( appNamePointer != NULL ) {
             // terminate full app path to get parent directory

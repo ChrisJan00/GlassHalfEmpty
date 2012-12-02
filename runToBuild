@@ -14,7 +14,7 @@ chmod u+x ./configure
 
 
 
-echo "Building Passage..."
+echo "Building GlassHalfEmpty..."
 
 make
 
@@ -26,13 +26,13 @@ mkdir graphics
 mkdir music
 mkdir settings
 
-cp gamma256/gameSource/Passage ./Passage
+cp gamma256/gameSource/GlassHalfEmpty ./GlassHalfEmpty
 cp gamma256/documentation/Readme.txt .
 cp gamma256/gameSource/graphics/* ./graphics
 cp gamma256/gameSource/music/* ./music
 cp gamma256/gameSource/settings/* ./settings
 
-echo "Run Passage to play."
+echo "Run GlassHalfEmpty to play."
 
 
 

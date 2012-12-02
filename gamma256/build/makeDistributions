@@ -22,33 +22,33 @@ mkdir unix
 
 
 # work on unix tree first
-mkdir unix/Passage
-mkdir unix/Passage/graphics
-mkdir unix/Passage/music
-mkdir unix/Passage/settings
+mkdir unix/GlassHalfEmpty
+mkdir unix/GlassHalfEmpty/graphics
+mkdir unix/GlassHalfEmpty/music
+mkdir unix/GlassHalfEmpty/settings
 
-cp ../documentation/Readme.txt unix/Passage/
+cp ../documentation/Readme.txt unix/GlassHalfEmpty/
 
-cp ../gameSource/graphics/*.tga unix/Passage/graphics
-cp ../gameSource/music/*.tga unix/Passage/music
-cp ../gameSource/settings/*.ini unix/Passage/settings
+cp ../gameSource/graphics/*.tga unix/GlassHalfEmpty/graphics
+cp ../gameSource/music/*.tga unix/GlassHalfEmpty/music
+cp ../gameSource/settings/*.ini unix/GlassHalfEmpty/settings
 
 
 # duplicate unix tree so far to make windows tree
-cp -r unix/Passage windows/
+cp -r unix/GlassHalfEmpty windows/
 
-cp ../gameSource/Passage unix/Passage/
+cp ../gameSource/GlassHalfEmpty unix/GlassHalfEmpty/
 
-cp win32/Passage.exe win32/*.dll windows/Passage/
+cp win32/GlassHalfEmpty.exe win32/*.dll windows/GlassHalfEmpty/
 
 cd unix
-tar cf "Passage_$1_$2.tar" Passage
-gzip "Passage_$1_$2.tar"
+tar cf "GlassHalfEmpty_$1_$2.tar" GlassHalfEmpty
+gzip "GlassHalfEmpty_$1_$2.tar"
 
 
 
 cd ../windows
-zip -r "Passage_$1_Windows.zip" Passage
+zip -r "GlassHalfEmpty_$1_Windows.zip" GlassHalfEmpty
 
 
 
