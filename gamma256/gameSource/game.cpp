@@ -378,9 +378,6 @@ int mainFunction( int inArgCount, char **inArgs ) {
         screenHeight = readHeight;
         }
     
-//    printf( "Screen dimensions for fullscreen mode:  %dx%d\n",
-//            screenWidth, screenHeight );
-    
     // set here, since screenWidth may have changed from default
     maxBlowUpFactor = screenWidth / width;
     
@@ -395,15 +392,6 @@ int mainFunction( int inArgCount, char **inArgs ) {
         fullScreen = readFullscreen;
         }
     
-//    printf( "Starting game in " );
-//    if( fullScreen ) {
-//        printf( "fullscreen" );
-//        }
-//    else {
-//        printf( "windowed" );
-//        }
-//    printf( " mode.\n" );
-    
 
 
     createScreen();
@@ -411,19 +399,13 @@ int mainFunction( int inArgCount, char **inArgs ) {
 
     // try to open joystick
     int numJoysticks = SDL_NumJoysticks();
-//    printf( "Found %d joysticks\n", numJoysticks );
     
     if( numJoysticks > 0 ) {
         // open first one by default
         joystick = SDL_JoystickOpen( 0 );
-    
-        if( joystick == NULL ) {
-//	    printf( "Couldn't open joystick 0: %s\n", SDL_GetError() );
-            }
         int numHats = SDL_JoystickNumHats( joystick );
         
         if( numHats <= 0 ) {
-//            printf( "No d-pad found on joystick\n" );
             SDL_JoystickClose( joystick );
             joystick = NULL;
             }
@@ -505,38 +487,13 @@ int mainFunction( int inArgCount, char **inArgs ) {
 
 
 char playGame() {
-        
-
     int currentSpriteIndex = 2;
-
     double playerX, playerY;
-
     double maxPlayerX = 0;
-
-    int score = 0;
-
-
-    // the gem that marks chests containing points
-    int specialGem = time( NULL ) % 4;
-
-    int exploreScore = 0;
-    int exploreSubPoints = 0;
-    // make sure explore score never goes down
-    int maxExploreScore = 0;
-    
-    int chestScore = 0;
-    
-    // track whether we ever met the spouse
-    // separate from World's haveMetSpouse()
-    char knowSpouse = false;
     bool spouseWaiting = true;
-
-
     
     initWorld();
     initScore();
-    
-        
     
     // room at top for score
     int totalGameImagePixels = width * totalImageHeight;
@@ -553,9 +510,6 @@ char playGame() {
 
     // first, fill the whole thing with black
     // SDL_FillRect( screen, NULL, 0x00000000 );
-
-    
-    
 
     double dX = 0;
     double dY = 0;
@@ -575,7 +529,6 @@ char playGame() {
     playerY = 2 + height/2;
     dY = 0;
 
-//    dX = -45;
     setPlayerPosition( (int)playerX, (int)playerY );
     setPlayerSpriteFrame( currentSpriteIndex );
 
@@ -652,66 +605,6 @@ char playGame() {
     int numTitleFadeFrames = 200;
 
     char stepDX = true;
-
-//    dX = -45;
-    /*
-    // TEMP
-    // generate mural image
-    printf( "Writing mural...\n" );
-    
-    int muralWidth = 4437;
-    int muralHeight = 12;
-    
-    
-    int numStrips = 16;
-    int stripWidth = muralWidth / numStrips;
-    
-    int betweenStripSkip = 1;
-    
-
-    int yOffset = 160;
-    
-    Image mural( stripWidth, 
-                 ( muralHeight + betweenStripSkip) * numStrips, 
-                 3, true );
-    
-    double *muralR = mural.getChannel( 0 );
-    double *muralG = mural.getChannel( 1 );
-    double *muralB = mural.getChannel( 2 );
-    
-
-    for( int s=0; s<numStrips; s ++ ) {
-        
-    for( int x=0; x<stripWidth; x++ ) {
-        for( int y=0; y<muralHeight; y++ ) {
-            int worldX = x + s * stripWidth;
-            
-            Uint32 sample = 
-                sampleFromWorld( worldX, y + yOffset, 1 );
-            
-            int muralY = s * (muralHeight + betweenStripSkip) + y;
-            
-            int index = muralY * stripWidth + x;
-            
-            muralR[ index ] = ( (sample >> 16) & 0xFF ) / 255.0;
-            muralG[ index ] = ( (sample >> 8) & 0xFF ) / 255.0;
-            muralB[ index ] = ( sample & 0xFF ) / 255.0;
-            }
-        }
-        }
-    
-    
-    File tgaFile( NULL, "mural.tga" );
-    FileOutputStream tgaStream( &tgaFile );
-    
-    TGAImageConverter converter;
-    
-    converter.formatImage( &mural, &tgaStream );
-        
-    // END TEMP    
-    */
-
-
 
     while( !done ) {
         
@@ -865,9 +758,6 @@ char playGame() {
                 
                 }
             }        
-        
-        //drawScore( gameImage, width, height, score );
-        
 
         if( isPlayerDead() ) {
             // fade to title screen
@@ -959,13 +849,6 @@ char playGame() {
             movingThisFrame = false;
             }
         
-        if( knowSpouse && isSpouseDead() ) {
-            
-            // player moves slower
-            // toggle motion on this frame
-            movingThisFrame = ( frameCount % 2 == 0 );
-            }
-        
         if( getKeyDown( SDLK_p ) && canPause ) {
             paused = true;
             }
@@ -1015,12 +898,6 @@ char playGame() {
         if( getKeyDown( SDLK_LEFT ) || getJoyPushed( SDL_HAT_LEFT ) ) {
             char notBlocked = 
                 !isBlocked( (int)( playerX - moveDelta ), (int)playerY );
-            
-            // spouse and character move, and are blocked, together
-            if( haveMetSpouse() &&
-                isBlocked( spouseX - moveDelta, spouseY ) ) {
-                notBlocked = false;
-                }
                     
             if( movingThisFrame && notBlocked ) {
                 
@@ -1048,12 +925,6 @@ char playGame() {
             char notBlocked = 
                 !isBlocked( (int)( playerX + moveDelta ), (int)playerY );
 
-            // spouse and character move, and are blocked, together
-            if( haveMetSpouse() &&
-                isBlocked( spouseX + moveDelta, spouseY ) ) {
-                notBlocked = false;
-                }
-
             if( movingThisFrame && notBlocked ) {
                 
                 dX += moveDelta;
@@ -1071,13 +942,7 @@ char playGame() {
             }
         else if( getKeyDown( SDLK_UP ) || getJoyPushed( SDL_HAT_UP ) ) {
             char notBlocked =
-                !isBlocked( (int)playerX, (int)( playerY - moveDelta ) );
-            
-            // spouse and character move, and are blocked, together
-            if( haveMetSpouse() &&
-                isBlocked( spouseX, spouseY - moveDelta ) ) {
-                notBlocked = false;
-                }            
+                !isBlocked( (int)playerX, (int)( playerY - moveDelta ) );         
             
             if( movingThisFrame && notBlocked ) {
                 
@@ -1105,11 +970,6 @@ char playGame() {
             char notBlocked = 
                 !isBlocked( (int)playerX, (int)( playerY + moveDelta ) );
             
-            // spouse and character move, and are blocked, together
-            if( haveMetSpouse() &&
-                isBlocked( spouseX, spouseY + moveDelta ) ) {
-                notBlocked = false;
-                }
             
             if( movingThisFrame && notBlocked ) {
                 
@@ -1197,13 +1057,6 @@ char playGame() {
         setMirrorSpriteFrame( currentSpriteIndex );
         setCharacterAges( age * 1.5 );
 
-        
-//        if( age > 0.85 ) {
-//            dieSpouse();
-//            }
-//        if( age >= 0.95 ) {
-//            diePlayer();
-//            }
 
         if ( (int) playerX >= (int) mirrorX ) {
             // when you meet your reflection, the game ends
@@ -1211,38 +1064,18 @@ char playGame() {
         }
 
         
-        if( isChest( (int)playerX, (int)playerY ) == CHEST_CLOSED ) {
-
-            openChest( (int)playerX, (int)playerY );
-
-            
-            int chestX, chestY;
-                
-            getChestCenter( (int)playerX, (int)playerY, &chestX, &chestY );
-            moveSpouseTo( (int)chestX, (int)chestY);
+        if( isGirl( (int)playerX, (int)playerY ) == GIRL_PRESENT ) {
+            int girlX, girlY;
+            contactGirl( (int)playerX, (int)playerY );
+            getGirlCenter( (int)playerX, (int)playerY, &girlX, &girlY );
+            moveSpouseTo( (int)girlX, (int)girlY);
             getSpousePosition(&spouseX, &spouseY);
             spouseFlee();
-            spouseWaiting = false;
-                
-//            if( getChestCode( (int)playerX, (int)playerY ) &
-//                0x01 << specialGem ) {
-                
-//                // reward player
-//                chestScore += 100;
-                
-                
-//                startPrizeAnimation( chestX, chestY );
-//                }
-//            else {
-//                startDustAnimation( chestX, chestY );
-//                }
-            
+            spouseWaiting = false;       
         } else {
-        
-        
+
             int distanceFromSpouse = (int) sqrt( pow( spouseX - playerX, 2 ) +
                                                  pow( spouseY - playerY, 2 ) );
-
 
             if (distanceFromSpouse < 10 && spouseWaiting) {
                 spouseWaiting = false;
@@ -1254,84 +1087,16 @@ char playGame() {
             }
         }
 
-//        if( ! haveMetSpouse() &&
-//            ! isSpouseDead() &&
-//            distanceFromSpouse < 10 ) {
-
-//            meetSpouse();
-            
-//            knowSpouse = true;
-            
-//            startHeartAnimation(
-//                (int)( ( spouseX - playerX ) / 2 + playerX ),
-//                (int)( ( spouseY - playerY ) / 2 + playerY ) - 2 );
-//            }
-        
-
         // stop after player has gone off right end of screen
         if( playerX - dX > width ) {
             dX = playerX - width;
             }
-         
-        int exploreDelta = 0;
-        
         if( playerX > maxPlayerX ) {
-            exploreDelta = (int)( playerX - maxPlayerX );
             maxPlayerX = playerX;
             }
-        
-        int spouseExploreFactor = 2;
-        
-        if( haveMetSpouse() ) {
-            // exploring worth more
-            exploreDelta *= spouseExploreFactor;
-            }
-        
-        exploreSubPoints += exploreDelta;
-        
 
-        exploreScore = (int)( exploreSubPoints / 10 );
-
-        if( haveMetSpouse() ) {
-            // show explore score contribution in jumps
-            exploreScore = 
-                ( exploreScore / spouseExploreFactor ) 
-                * spouseExploreFactor;
-            // note:
-            // this can cause our score to go down (to the previous
-            // jump) as we transition from not having a spouse to
-            // having one.
-            // we fix this below with maxExploreScore
-            }
-        
-        if( exploreScore < maxExploreScore ) {
-            // don't let it go down from max
-            exploreScore = maxExploreScore;
-            }
-        
-
-        score = chestScore + exploreScore;
-        if( exploreScore > maxExploreScore ) {
-            maxExploreScore = exploreScore;
-            }
-            
-        
         }
 
-
-//    unsigned long netTime = time( NULL ) - startTime;
-//    double frameRate = frameCount / (double)netTime;
-    
-//    printf( "Max world x = %f\n", maxWorldX );
-//    printf( "Min world x = %f\n", minWorldX );
-    
-//    printf( "Frame rate = %f fps (%d frames)\n",
-//            frameRate, frameCount );
-
-//    printf( "Game time = %d:%d\n",
-//            (int)netTime / 60, (int)netTime % 60 );
-
-//    fflush( stdout );
     
     
     delete titleImage;

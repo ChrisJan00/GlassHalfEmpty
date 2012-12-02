@@ -15,10 +15,6 @@ void destroyWorld();
 
 Uint32 sampleFromWorld( int inX, int inY, double inWeight = 1.0 );
 
-
-void startPrizeAnimation( int inX, int inY );
-void startDustAnimation( int inX, int inY );
-
 void setPlayerPosition( int inX, int inY );
 void setMirrorPosition( int inX, int inY );
 void setPlayerSpriteFrame( int inFrame );
@@ -31,17 +27,8 @@ void updateSpousePosition(int playerX, int playerY);
 
 void getSpousePosition( int *outX, int *outY );
 
-char haveMetSpouse();
-
-void meetSpouse();
-
-void startHeartAnimation( int inX, int inY );
 
 void diePlayer();
-
-void dieSpouse();
-
-char isSpouseDead();
 
 char isPlayerDead();
 

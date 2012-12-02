@@ -54,24 +54,11 @@ class GraphicContainer {
     
     };
 
-
-
-
-
-
-
-
 GraphicContainer *tileContainer;
-GraphicContainer *chestContainer;
 
 GraphicContainer *spriteContainer;
-GraphicContainer *spriteSadContainer;
 GraphicContainer *spouseContainer;
 GraphicContainer *mirrorContainer;
-
-GraphicContainer *prizeAnimationContainer;
-GraphicContainer *dustAnimationContainer;
-GraphicContainer *heartAnimationContainer;
 
 
 // dimensions of one tile.  TileImage contains 13 tiles, stacked vertically,
@@ -112,18 +99,8 @@ int mapTileSet( int inSetNumber ) {
 
 
 
-int chestW = 8;
-int chestH = 8;
-
-int numGems = 6;
-int gemLocations[6] = { 41, 42, 43, 44, 45, 46 };
-//int gemLocations[4] = { 10, 11, 12, 13 };
-double gemColors[6][3] = { { 255, 0, 0 }, 
-                           { 0, 255, 0 }, 
-                           { 255, 160, 0 }, 
-                           { 0, 0, 255 }, 
-                           { 255, 255, 0 },
-                           { 255, 0, 255 } };
+int girlW = 8;
+int girlH = 8;
 
 
 
@@ -205,8 +182,6 @@ SimpleVector<Animation> animationList;
 
 
 // pointers into vectors are unsafe
-//Animation *spriteAnimation;
-//Animation *spouseAnimation;
 
 int spriteAnimationIndex;
 int spouseAnimationIndex;
@@ -214,8 +189,6 @@ int mirrorAnimationIndex;
 
 
 char playerDead = false;
-char spouseDead = false;
-char metSpouse = false;
 char spouseEscaping = false;
 
 
@@ -229,12 +202,9 @@ void initWorld() {
     resetSampleHashTable();
     
     playerDead = false;
-    spouseDead = false;
-    metSpouse = false;
-    
+
     animationList.deleteAll();
     
-
     tileImageW = tileContainer->mW;
     tileImageH = tileContainer->mH;
     
@@ -272,12 +242,6 @@ void initWorld() {
     }
 
 
-
-
-
-
-
-
 char isSpriteTransparent( GraphicContainer *inContainer, int inSpriteIndex ) {
     
     // take transparent color from corner
@@ -304,7 +268,7 @@ typedef struct rgbColorStruct rgbColor;
 
  
 // outTransient set to true if sample returned is part of a transient
-// world feature (character sprite, chest, etc.)
+// world feature (character sprite, girl, etc.)
 rgbColor sampleFromWorldNoWeight( int inX, int inY, char *outTransient );
 
 // same, but wrapped in a hash table to store non-transient results
@@ -604,13 +568,11 @@ rgbColor sampleFromWorldNoWeight( int inX, int inY, char *outTransient ) {
         blendWeight * tileContainer->mBlue[ blendImageIndex ] );
     
     
-    // only consider drawing chests in empty spots
-    if( !blocked && isChest( inX, inY ) ) {
-        // draw chest here
+    // only consider drawing girls in empty spots
+    if( !blocked && isGirl( inX, inY ) ) {
+        // draw girl here
 
-//        char chestType = isChest( inX, inY );
-
-        // draw spouse sprite instead of chest
+        // draw spouse sprite instead of girl
         Animation a = *( animationList.getElement( spouseAnimationIndex ) );
 
         int animW = a.mFrameW;
@@ -619,8 +581,6 @@ rgbColor sampleFromWorldNoWeight( int inX, int inY, char *outTransient ) {
 
         // pixel position relative to animation center
         // player position centered on sprint left-to-right
-//        int animX = (int)( inX - a.mX + a.mFrameW / 2 );
-//        int animY = (int)( inY - a.mY + a.mFrameH / 2 );
         int animX = inX % a.mFrameW;
         int animY = inY % a.mFrameH;
 
@@ -702,10 +662,6 @@ int getTileHeight() {
 
 
 void destroyWorld() {
-    /*
-    printf( "%d hits, %d misses, %f hit ratio\n", 
-            hitCount, missCount, hitCount / (double)( hitCount + missCount ) );
-    */
     }
 
 
@@ -729,36 +685,6 @@ void stepAnimations() {
         
         }
     }
-
-
-
-void startPrizeAnimation( int inX, int inY ) {
-
-    Animation a( inX, inY, 16, 16, true, true, prizeAnimationContainer );
-    
-    animationList.push_back( a );
-    }
-
-
-
-void startDustAnimation( int inX, int inY ) {
-
-    Animation a( inX, inY, 16, 16, true, true, dustAnimationContainer );
-    
-    animationList.push_back( a );
-    }
-
-
-
-void startHeartAnimation( int inX, int inY ) {
-
-    Animation a( inX, inY, 16, 16, true, true, heartAnimationContainer );
-    
-    animationList.push_back( a );
-    }
-
-
-
 
 
 #include <math.h>
@@ -786,50 +712,6 @@ void setPlayerPosition( int inX, int inY ) {
         }
     
     spriteAnimation->mY = newSpriteY;
-
-    if( metSpouse && ! spouseDead ) {
-        Animation *spouseAnimation = 
-            animationList.getElement( spouseAnimationIndex );
-
-        // spouse stands immediately in front of player
-        int desiredSpouseX = inX + spouseAnimation->mFrameH;
-        int desiredSpouseY = spriteAnimation->mY;
-
-        // gravitates there gradually one pixel at a time in each x and y
-        int dX = desiredSpouseX - spouseAnimation->mX;
-        int dY = desiredSpouseY - spouseAnimation->mY;
-        
-        // convert to -1, 0, or +1
-        if( dX != 0 ) {
-            dX = (int)( dX / fabs( dX ) );
-            }
-        if( dY != 0 ) {
-            dY = (int)( dY / fabs( dY ) );
-            }
-        
-        if( moving ) {
-            // only execute this transition when player is moving
-            spouseAnimation->mX += dX;
-            spouseAnimation->mY += dY;
-            }
-
-
-        // check for heart animation and have it track moving couple
-        for( int i=0; i<animationList.size(); i++ ) {
-            Animation *a = animationList.getElement( i );
-            
-            if( a->mGraphics == heartAnimationContainer ) {
-                
-                // move it halfway between player and spouse
-                a->mX = ( spouseAnimation->mX - spriteAnimation->mX ) / 2 +
-                    spriteAnimation->mX;
-                a->mY = ( spouseAnimation->mY - spriteAnimation->mY ) / 2 +
-                    spriteAnimation->mY + 1;
-                }
-            }
-        
-            
-        }
 
     }
 
@@ -894,8 +776,6 @@ void updateSpousePosition(int playerX, int playerY) {
 }
 
 
-
-
 void setMirrorPosition( int inX, int inY ) {
 
     Animation *mirrorAnimation =
@@ -915,14 +795,6 @@ void setPlayerSpriteFrame( int inFrame ) {
         animationList.getElement( spriteAnimationIndex );
 
     spriteAnimation->mFrameNumber = inFrame;
-    
-    if( metSpouse && ! spouseDead ) {
-        Animation *spouseAnimation = 
-            animationList.getElement( spouseAnimationIndex );
-        
-        // spouse follows player
-        spouseAnimation->mFrameNumber = inFrame;
-        }
 
     // update opacity if it's "dying"
     if (!playerDead) {
@@ -948,18 +820,14 @@ void setMirrorSpriteFrame( int inFrame ) {
 void setCharacterAges( double inAge ) {
     Animation *spriteAnimation = 
         animationList.getElement( spriteAnimationIndex );
-//    Animation *spouseAnimation =
-//        animationList.getElement( spouseAnimationIndex );
 
     // 0 -> 0.25, constant page 0
     if( inAge <= 0.25 ) {
         spriteAnimation->mPageNumber = 0;
-        //spouseAnimation->mPageNumber = 0;
         }
     // 0.75 - 1.0, constant last page
     else if( inAge >= 0.75 ) {
         spriteAnimation->mPageNumber = spriteAnimation->mNumPages - 1;
-        //spouseAnimation->mPageNumber = spouseAnimation->mNumPages - 1;
         }
     else {
         // blend of pages in between
@@ -967,9 +835,6 @@ void setCharacterAges( double inAge ) {
         
         spriteAnimation->mPageNumber = 
             blendingAge * ( spriteAnimation->mNumPages - 1 );
-
-//        spouseAnimation->mPageNumber =
-//            blendingAge * ( spouseAnimation->mNumPages - 1 );
         }
     }
 
@@ -984,19 +849,6 @@ void getSpousePosition( int *outX, int *outY ) {
     }
 
 
-
-char haveMetSpouse() {
-    return metSpouse && ! spouseDead;
-    }
-
-
-
-void meetSpouse() {
-    metSpouse = true;
-    }
-
-
-
 void diePlayer() {
     Animation *spriteAnimation = 
         animationList.getElement( spriteAnimationIndex );
@@ -1007,66 +859,26 @@ void diePlayer() {
     spriteAnimation->mFrameNumber = 8;
     }
 
-
-
-void dieSpouse() {
-    Animation *spriteAnimation = 
-        animationList.getElement( spriteAnimationIndex );
-    Animation *spouseAnimation = 
-        animationList.getElement( spouseAnimationIndex );
-
-    spouseDead = true;
-    
-    // tombstone
-    spouseAnimation->mFrameNumber = 8;
-    
-    if( metSpouse ) {
-        // swap player sprite with sad sprite
-        spriteAnimation->swapGraphics( spriteSadContainer );
-        }
-    }
-
-
-
 char isPlayerDead() {
     return playerDead;
-    }
-
-
-
-char isSpouseDead() {
-    return spouseDead;
-    }
-
+}
 
 
 void loadWorldGraphics() {
     tileContainer = new GraphicContainer( "tileSet.tga" );
-    chestContainer = new GraphicContainer( "chest.tga" );
       
     spriteContainer = new GraphicContainer( "characterSprite.tga" );
-    spriteSadContainer = new GraphicContainer( "characterSpriteSad.tga" );
     spouseContainer = new GraphicContainer( "spouseSprite.tga" );
     mirrorContainer = new GraphicContainer( "mirrorSprite.tga");
-    
-    prizeAnimationContainer = new GraphicContainer( "chestPrize.tga" );
-    dustAnimationContainer = new GraphicContainer( "chestDust.tga" );
-    heartAnimationContainer = new GraphicContainer( "heart.tga" );
     }
 
 
 
 void destroyWorldGraphics() {
     delete tileContainer;
-    delete chestContainer;
       
     delete spriteContainer;
-    delete spriteSadContainer;
     delete spouseContainer;
     delete mirrorContainer;
-    
-    delete prizeAnimationContainer;
-    delete dustAnimationContainer;
-    delete heartAnimationContainer;
     }
 
